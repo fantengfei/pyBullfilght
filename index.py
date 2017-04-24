@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    return '<h1>Home</h1>'
+    return '<center style="margin-top:50px;"><h1>Home</h1></center>'
 
 @app.route('/list', methods=['GET'])
 def list():
