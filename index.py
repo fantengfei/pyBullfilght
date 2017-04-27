@@ -1,30 +1,47 @@
 # coding=UTF-8
 
-from flask import Flask
-from flask import request
-from flask import jsonify
+from flask import Flask, session, request
+from flask_socketio import SocketIO, send, emit, join_room, leave_room
 
-users = {}
+import urllib
+import random
+import json
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app)
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET'])
 def home():
-    return '<center style="margin-top:50px;"><h1>Home</h1></center>'
+    return '<center style="margin-top:20px;"><h1>Home</h1></center>'
 
-@app.route('/list', methods=['GET'])
-def list():
-    return jsonify(users)
+@app.route('/login', methods=['GET','POST'])
+def login():
+    # https://api.weixin.qq.com/sns/jscode2session?appid=APPID&secret=SECRET&js_code=JSCODE&grant_type=authorization_code
+    # AppID: wxe2018d200c505930
+    # appsecret: be695b45f2b697ab837bd992baa8f676
+    if request.method != 'POST':
+        return False
 
-@app.route('/user', methods=['GET', 'POST'])
-def user():
-    u = (request.json)['user']
-    k = u['avatarUrl']
-    if k not in users:
-        users[k] = u
-        return 'success'
+    url = 'https://api.weixin.qq.com/sns/jscode2session?appid=wxe2018d200c505930&secret=be695b45f2b697ab837bd992baa8f676&js_code=' + request.form['code'] + '&grant_type=authorization_code'
+    result = urllib.urlopen(url)
+    # data = result.read()
+    # print data
+    j = json.load(result)
+    print j
+
+    session_key = j['session_key']
+    openid = j['openid']
+
+    if session_key and openid:
+        session[openid] = session_key
+        return session[openid]
     else:
-        return 'failure'
+        return False
+
+@socketio.on('join')
+def handle_join(data):
+    emit('join in', data)
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8080)
+    socketio.run(app, host='127.0.0.1', port = 8080)
