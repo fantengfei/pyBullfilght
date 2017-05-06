@@ -23,10 +23,6 @@ class PlayNamespace(Namespace):
     '''
     def on_join(self, data):
         user = data['user']
-        if check.check_session(user['session']) == False:
-            emit('join in', 'session 过期', json = False)
-            return
-
         room = data['room']
         
         # get users from room
@@ -34,8 +30,7 @@ class PlayNamespace(Namespace):
         inRoom = False
 
         for u in users:
-            if u['session'] == user['session']:
-                u['session'] = user['session']
+            if u['openid'] == user['openid']:
                 inRoom = True
                 break
         
@@ -45,15 +40,14 @@ class PlayNamespace(Namespace):
             self.playrooms[room] = users
 
         # leave room for invalid sid
-        leave_room(room, self.clients.get(user['session'], None))
+        leave_room(room, self.clients.get(user['openid']))
 
         # save sid
-        self.clients[user['session']] = request.sid
+        self.clients[user['openid']] = request.sid
             
         # join room
         join_room(room)
 
-        print str(users)
         print str(self.playrooms.keys())
         
         emit('join', users, room = room)
@@ -71,7 +65,7 @@ class PlayNamespace(Namespace):
 
         for k, v in self.playrooms.items():
             for u in v:
-                if u['session'] == session:
+                if u['openid'] == session:
                     room = k 
                     user = u
                     break

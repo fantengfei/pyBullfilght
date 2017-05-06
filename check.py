@@ -3,11 +3,11 @@ import urllib
 import random, string, json
 import sqldb
 
-def check_session(se):
-    re = sqldb.query_db('select openid from login where session = ?', [se], one=True)
-    if not re['openid']:
-        return False
-    return True
+def check_session(data):
+    re = sqldb.query_db('select session from login where openid = ?', [data['openid']], one=True)
+    if re != None and re.get('session') == data['session']:
+        return True
+    return False
 
 def make_session(code):
     # https://api.weixin.qq.com/sns/jscode2session?appid=APPID&secret=SECRET&js_code=JSCODE&grant_type=authorization_code
@@ -22,8 +22,16 @@ def make_session(code):
     openid = j['openid']
 
     if session_key and openid:
-        if len(sqldb.query_db('insert into login(openid, session) values(?, ?)', [openid, session_key])) == 0:
-            return session_key
+        re = sqldb.query_db('select * from login where openid = ?', [openid], one=True)
+
+        if re == None:
+            print 'insert' + openid
+            res = sqldb.query_db('insert into login(openid, session) values(?, ?)', [openid, session_key])
+        else:
+            print 'update' + openid
+            res = sqldb.query_db('update login set session = ? where openid = ?', [session_key, openid])
+
+        return {'openid': openid, 'session':session_key}
 
     return False
         
