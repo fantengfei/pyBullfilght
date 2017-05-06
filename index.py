@@ -35,5 +35,5 @@ def login():
 
 if __name__ == '__main__':
     app.secret_key = 'F12Zr47j\3yX R~X@H!jmM]Lwf/,?KTwf/,?KT'
-    socket.run(app, host='127.0.0.1', port = 8080)
+    socket.run(app, host='0.0.0.0', port = 8080)
     
